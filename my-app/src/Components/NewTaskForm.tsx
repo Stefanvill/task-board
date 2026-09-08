@@ -20,24 +20,28 @@ function NewTaskForm() {
   };
 
   return (
-    <form method="post" onSubmit={handleSubmit}>
+    <form method="post" onSubmit={handleSubmit} className="taskForm">
       <input
         type="text"
+        placeholder="Title"
         value={title}
         onChange={(event) => setTitle(event.target.value)}
         required
       />
       <textarea
+        placeholder="Description"
         value={description}
         onChange={(event) => setDescription(event.target.value)}
         required
       ></textarea>
       <input
+        placeholder="Assignee"
         value={assignee}
         onChange={(event) => setAssignee(event.target.value)}
         required
       />
       <input
+        placeholder="Category"
         type="text"
         value={category}
         onChange={(event) => setCategory(event.target.value)}
