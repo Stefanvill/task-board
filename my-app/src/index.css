@@ -1,0 +1,61 @@
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+header {
+  background-color: #eeeeff;
+}
+
+header section {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+body {
+  margin: 0;
+  background-color: #9fb4c7;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+.task-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 320px));
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.task-card {
+  color: #9fb798;
+  background-color: #28587b;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 16px;
+  margin: 0;
+  border: 1px solid black;
+}
+
+.task-card:hover {
+  border: 3px solid black;
+}
+
+.column {
+  text-align: center;
+}
+
+footer {
+  background-color: #eeeeff;
+  align-items: baseline;
+}
