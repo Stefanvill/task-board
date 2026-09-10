@@ -1,9 +1,11 @@
 import express from "express";
 import cors from "cors";
+import "dotenv/config";
 import router from "./articleRoutes.js";
+import { getDatabaseVersion, initializeDatabase } from "../db/articles.js";
 
 const app = express();
-const port = 3005;
+const port = process.env.PORT || 3005;
 
 app.use(
   cors({
@@ -13,8 +15,26 @@ app.use(
 
 app.use(express.json());
 
+app.get("/api/health", async (request, response) => {
+  try {
+    const version = await getDatabaseVersion();
+    response.json({ database: "connected", version });
+  } catch (error) {
+    response
+      .status(503)
+      .json({ database: "disconnected", error: error.message });
+  }
+});
+
 app.use("/api/tasks", router);
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
+try {
+  await initializeDatabase();
+
+  app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+  });
+} catch (error) {
+  console.error("Could not initialize the database", error);
+  process.exit(1);
+}

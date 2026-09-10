@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import Column from "./Components/Column";
 import Footer from "./Components/Footer";
 import Header from "./Components/Header";
@@ -5,144 +6,95 @@ import NewTaskForm from "./Components/NewTaskForm";
 import TaskCard from "./Components/TaskCard";
 import type { Task } from "./types/Task";
 
+const API_URL = "http://localhost:3005/api/tasks";
+
 function App() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [error, setError] = useState("");
+
+  // useEffect kör kod efter att komponenten har renderats, vilket passar när uppgifter ska hämtas från backend.
+  useEffect(() => {
+    // Funktionen är async eftersom den väntar på ett svar från backend med await.
+    async function loadTasks() {
+      try {
+        const response = await fetch(API_URL);
+
+        if (!response.ok) {
+          throw new Error("Could not load tasks");
+        }
+
+        const data: Task[] = await response.json();
+        setTasks(data);
+      } catch (error) {
+        setError(
+          error instanceof Error ? error.message : "Something went wrong",
+        );
+      }
+    }
+    // useEffect körs en gång när komponenten monteras eftersom beroendelistan är tom. Då anropas loadTasks.
+    loadTasks();
+  }, []);
+
+  // async behövs eftersom funktionen väntar på POST-svaret. Omit tar bort id och status eftersom backend skapar dessa värden.
+  async function handleCreateTask(taskData: Omit<Task, "id" | "status">) {
+    // Ja, POST anger att en ny uppgift ska skickas och skapas på backend.
+    const response = await fetch(API_URL, {
+      method: "POST",
+      // Headers berättar för backend att requestens body innehåller JSON-data.
+      headers: {
+        "Content-Type": "application/json",
+      },
+      // JSON.stringify omvandlar JavaScript-objektet till text som kan skickas i requesten.
+      body: JSON.stringify(taskData),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || "Could not create task");
+    }
+
+    // Läs den skapade uppgiften från backend, inklusive dess nya id och status.
+    const newTask: Task = await response.json();
+    setTasks((currentTasks) => [...currentTasks, newTask]);
+  }
+
   const todoTasks = tasks.filter((task) => task.status === "todo");
   const doingTasks = tasks.filter((task) => task.status === "doing");
   const doneTasks = tasks.filter((task) => task.status === "done");
 
   return (
     <div className="app-shell">
-      <Header></Header>
+      <Header />
+
       <main>
-        <NewTaskForm></NewTaskForm>
+        <NewTaskForm onCreateTask={handleCreateTask} />
+
+        {error && <p>{error}</p>}
+
         <section className="task-board">
           <Column title="ToDo">
-            {todoTasks.map((tasks) => (
-              <TaskCard
-                key={tasks.id}
-                id={tasks.id}
-                title={tasks.title}
-                description={tasks.description}
-                assignee={tasks.assignee}
-                category={tasks.category}
-                priority={tasks.priority}
-              ></TaskCard>
+            {todoTasks.map((task) => (
+              <TaskCard key={task.id} {...task} />
             ))}
           </Column>
+
           <Column title="Doing">
-            {doingTasks.map((tasks) => (
-              <TaskCard
-                key={tasks.id}
-                id={tasks.id}
-                title={tasks.title}
-                description={tasks.description}
-                assignee={tasks.assignee}
-                category={tasks.category}
-                priority={tasks.priority}
-              ></TaskCard>
+            {doingTasks.map((task) => (
+              <TaskCard key={task.id} {...task} />
             ))}
           </Column>
+
           <Column title="Done">
-            {doneTasks.map((tasks) => (
-              <TaskCard
-                key={tasks.id}
-                id={tasks.id}
-                title={tasks.title}
-                description={tasks.description}
-                assignee={tasks.assignee}
-                category={tasks.category}
-                priority={tasks.priority}
-              ></TaskCard>
+            {doneTasks.map((task) => (
+              <TaskCard key={task.id} {...task} />
             ))}
           </Column>
         </section>
       </main>
-      <Footer></Footer>
+
+      <Footer />
     </div>
   );
 }
-const tasks: Task[] = [
-  {
-    id: 1,
-    title: "Cleaning classroom",
-    description: "Clean classroom 9",
-    assignee: "Steffe",
-    category: "Cleaning",
-    priority: "low",
-    status: "todo",
-  },
-  {
-    id: 2,
-    title: "Build form",
-    description: "Build a register form",
-    assignee: "Jakob",
-    category: "Coding",
-    priority: "medium",
-    status: "doing",
-  },
-  {
-    id: 3,
-    title: "Write tests",
-    description: "Write tests for the components",
-    assignee: "Joakim",
-    category: "Testing",
-    priority: "high",
-    status: "done",
-  },
-  {
-    id: 4,
-    title: "Plan weekly meeting",
-    description: "Prepare the agenda for the weekly meeting",
-    assignee: "Sara",
-    category: "Planning",
-    priority: "medium",
-    status: "todo",
-  },
-  {
-    id: 5,
-    title: "Update documentation",
-    description: "Add instructions for using the task board",
-    assignee: "Alex",
-    category: "Documentation",
-    priority: "low",
-    status: "todo",
-  },
-  {
-    id: 6,
-    title: "Review design",
-    description: "Review the new board layout",
-    assignee: "Nora",
-    category: "Design",
-    priority: "high",
-    status: "doing",
-  },
-  {
-    id: 7,
-    title: "Connect task data",
-    description: "Connect the task array to the task cards",
-    assignee: "Linus",
-    category: "Coding",
-    priority: "high",
-    status: "doing",
-  },
-  {
-    id: 8,
-    title: "Test task filters",
-    description: "Check that tasks can be filtered by status",
-    assignee: "Maja",
-    category: "Testing",
-    priority: "medium",
-    status: "done",
-  },
-  {
-    id: 9,
-    title: "Fix mobile layout",
-    description: "Make the task board work on smaller screens",
-    assignee: "Oskar",
-    category: "Design",
-    priority: "medium",
-    status: "done",
-  },
-];
 
 export default App;
