@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Route, Routes } from "react-router-dom";
 import Column from "./Components/Column";
 import Footer from "./Components/Footer";
 import Header from "./Components/Header";
@@ -7,6 +8,38 @@ import TaskCard from "./Components/TaskCard";
 import type { Task } from "./types/Task";
 
 const API_URL = "http://localhost:3005/api/tasks";
+
+type TaskBoardProps = {
+  tasks: Task[];
+};
+
+function TaskBoard({ tasks }: TaskBoardProps) {
+  const todoTasks = tasks.filter((task) => task.status === "todo");
+  const doingTasks = tasks.filter((task) => task.status === "doing");
+  const doneTasks = tasks.filter((task) => task.status === "done");
+
+  return (
+    <section className="task-board">
+      <Column title="ToDo">
+        {todoTasks.map((task) => (
+          <TaskCard key={task.id} {...task} />
+        ))}
+      </Column>
+
+      <Column title="Doing">
+        {doingTasks.map((task) => (
+          <TaskCard key={task.id} {...task} />
+        ))}
+      </Column>
+
+      <Column title="Done">
+        {doneTasks.map((task) => (
+          <TaskCard key={task.id} {...task} />
+        ))}
+      </Column>
+    </section>
+  );
+}
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -58,38 +91,20 @@ function App() {
     setTasks((currentTasks) => [...currentTasks, newTask]);
   }
 
-  const todoTasks = tasks.filter((task) => task.status === "todo");
-  const doingTasks = tasks.filter((task) => task.status === "doing");
-  const doneTasks = tasks.filter((task) => task.status === "done");
-
   return (
     <div className="app-shell">
       <Header />
 
       <main>
-        <NewTaskForm onCreateTask={handleCreateTask} />
-
         {error && <p>{error}</p>}
 
-        <section className="task-board">
-          <Column title="ToDo">
-            {todoTasks.map((task) => (
-              <TaskCard key={task.id} {...task} />
-            ))}
-          </Column>
-
-          <Column title="Doing">
-            {doingTasks.map((task) => (
-              <TaskCard key={task.id} {...task} />
-            ))}
-          </Column>
-
-          <Column title="Done">
-            {doneTasks.map((task) => (
-              <TaskCard key={task.id} {...task} />
-            ))}
-          </Column>
-        </section>
+        <Routes>
+          <Route path="/" element={<TaskBoard tasks={tasks} />} />
+          <Route
+            path="/new"
+            element={<NewTaskForm onCreateTask={handleCreateTask} />}
+          />
+        </Routes>
       </main>
 
       <Footer />
