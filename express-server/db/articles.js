@@ -1,30 +1,9 @@
 import { neon } from "@neondatabase/serverless";
 import "dotenv/config";
 
-// var hemskt att försöka ta in non db men nu är det löst efter mycket om och men
+//Db delen hade jag jätte svårt att lösa så fick mycket hjälp av ai på denna del
 
-const databaseUrl = process.env.DATABASE_URL?.replace(
-  /^DATABASE_URL\s*=\s*/,
-  "",
-)
-  .replace(/^['"]|['"]$/g, "")
-  .trim();
-
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required");
-}
-
-const sql = neon(databaseUrl);
-
-const requiredFields = [
-  "title",
-  "description",
-  "assignee",
-  "category",
-  "priority",
-];
-const priorities = ["low", "medium", "high"];
-const statuses = ["todo", "doing", "done"];
+const sql = neon(process.env.DATABASE_URL);
 
 export async function getDatabaseVersion() {
   const [result] = await sql`SELECT version()`;
@@ -45,9 +24,9 @@ export async function initializeDatabase() {
     )
   `;
 
-  const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM tasks`;
+  const result = await sql`SELECT COUNT(*)::int AS count FROM tasks`;
 
-  if (count === 0) {
+  if (result[0].count === 0) {
     await sql`
       INSERT INTO tasks (title, description, assignee, category, priority, status)
       VALUES
@@ -55,22 +34,6 @@ export async function initializeDatabase() {
         ('Build form', 'Build a register form', 'Jakob', 'Coding', 'medium', 'doing'),
         ('Write tests', 'Write tests for the components', 'Joakim', 'Testing', 'high', 'done')
     `;
-  }
-}
-
-function validateTask(task) {
-  const missingFields = requiredFields.filter((field) => !task[field]);
-
-  if (missingFields.length > 0) {
-    throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
-  }
-
-  if (!priorities.includes(task.priority)) {
-    throw new Error("Priority must be low, medium, or high");
-  }
-
-  if (task.status && !statuses.includes(task.status)) {
-    throw new Error("Status must be todo, doing, or done");
   }
 }
 
@@ -83,8 +46,6 @@ export async function getAllTasks() {
 }
 
 export async function createTask(task) {
-  validateTask(task);
-
   const [newTask] = await sql`
     INSERT INTO tasks (title, description, assignee, category, priority, status)
     VALUES (
@@ -102,14 +63,6 @@ export async function createTask(task) {
 }
 
 export async function updateTask(id, changes) {
-  if (changes.priority && !priorities.includes(changes.priority)) {
-    throw new Error("Priority must be low, medium, or high");
-  }
-
-  if (changes.status && !statuses.includes(changes.status)) {
-    throw new Error("Status must be todo, doing, or done");
-  }
-
   const [updatedTask] = await sql`
     UPDATE tasks
     SET
@@ -123,7 +76,7 @@ export async function updateTask(id, changes) {
     RETURNING id, title, description, assignee, category, priority, status
   `;
 
-  return updatedTask || null;
+  return updatedTask;
 }
 
 export async function deleteTask(id) {
